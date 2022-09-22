@@ -3,6 +3,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.connor.websocketchatserver" >
 
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
     <application
         android:name=".App"
         android:allowBackup="true"
@@ -15,7 +19,7 @@
         android:theme="@style/Theme.WebSocketChatServer"
         tools:targetApi="31" >
         <service
-            android:name=".KtorService"
+            android:name=".service.KtorService"
             android:enabled="true"
             android:exported="true" >
         </service>

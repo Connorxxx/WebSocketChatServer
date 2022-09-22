@@ -1,6 +1,12 @@
 package com.connor.websocketchatserver.models
 
+private const val currentUserId = 1
+
 data class ChatMessage(
-    val msg: String,
-    val name: String? = "Jon"
-)
+    val content: String,
+    val userId: Int,
+) {
+    fun isMine(): Boolean {
+        return currentUserId == userId
+    }
+}
