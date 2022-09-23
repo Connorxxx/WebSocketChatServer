@@ -65,8 +65,8 @@ class KtorService : Service() {
         ioScope.launch {
             configServer.stop(1_000, 2_000)
             job.cancelAndJoin()
-            stopForeground(true)
         }
+        stopForeground(true)
         super.onDestroy()
     }
 }
