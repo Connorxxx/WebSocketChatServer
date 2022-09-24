@@ -8,13 +8,18 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.connor.websocketchatserver.MainActivity
+import com.connor.websocketchatserver.R
 import com.connor.websocketchatserver.ktor.configureRouting
 import com.connor.websocketchatserver.ktor.configureSerialization
+import com.connor.websocketchatserver.vm.MainViewModel
+import com.drake.channel.sendTag
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import kotlinx.coroutines.*
+import kotlin.concurrent.thread
 
 class KtorService : Service() {
 
@@ -36,8 +41,10 @@ class KtorService : Service() {
         super.onCreate()
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel("ktor_server", "Ktor Service",
-                NotificationManager.IMPORTANCE_DEFAULT)
+            val channel = NotificationChannel(
+                "ktor_server", "Ktor Service",
+                NotificationManager.IMPORTANCE_DEFAULT
+            )
             manager.createNotificationChannel(channel)
         }
         val intent = Intent(this, MainActivity::class.java)
@@ -45,6 +52,7 @@ class KtorService : Service() {
         val notification = NotificationCompat.Builder(this, "ktor_server")
             .setContentTitle("Ktor server is running")
             .setContentText("You could disable it notification")
+            .setSmallIcon(R.drawable.outline_rss_feed_24)
             .setContentIntent(pi)
             .build()
         startForeground(1, notification)
@@ -54,6 +62,7 @@ class KtorService : Service() {
         ioScope.launch {
             configServer.start(wait = true)
         }
+
         return super.onStartCommand(intent, flags, startId)
     }
 
@@ -63,10 +72,10 @@ class KtorService : Service() {
 
     override fun onDestroy() {
         ioScope.launch {
-            configServer.stop(1_000, 2_000)
+            configServer.stop(4000, 8000)
+            sendTag("serverStop")
             job.cancelAndJoin()
         }
-        stopForeground(true)
         super.onDestroy()
     }
 }

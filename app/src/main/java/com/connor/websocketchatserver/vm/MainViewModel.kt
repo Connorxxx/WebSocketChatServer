@@ -1,9 +1,10 @@
 package com.connor.websocketchatserver.vm
 
-import android.util.Log
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import com.connor.websocketchatserver.models.ChatMessage
+import com.drake.serialize.serialize.serialLazy
 import java.net.NetworkInterface
 
 class MainViewModel(val handle: SavedStateHandle) : ViewModel() {
@@ -13,19 +14,31 @@ class MainViewModel(val handle: SavedStateHandle) : ViewModel() {
         private var openWebSocket = false
     }
 
-    val openWebSocketLiveData = handle.getLiveData<String>(KEY)
+    val liveData = MutableLiveData<Boolean>()
+
+    val contentData = handle.getStateFlow(KEY, "")
+
+    var content: String? by serialLazy()
+
+    fun setQuery(query: String) {
+        handle[KEY] = query
+    }
 
     fun getOpenWebSocket() = openWebSocket
 
     fun setOpenWebSocket(open: Boolean) {
         openWebSocket = open
+        liveData.value = open
     }
 
     fun getMsg(userId: Int, msg: String): List<ChatMessage> {
         return listOf(ChatMessage(msg, userId))
     }
 
-    fun getIpAddressInLocalNetwork(): String? {
+    fun getNet(b: Boolean) =
+        if (b) "ws://${getIpAddressInLocalNetwork()}:19980/chat" else "WebSocket server closed"
+
+    private fun getIpAddressInLocalNetwork(): String? {
         val networkInterfaces = NetworkInterface.getNetworkInterfaces().iterator().asSequence()
         val localAddresses = networkInterfaces.flatMap {
             it.inetAddresses.asSequence()
@@ -36,10 +49,5 @@ class MainViewModel(val handle: SavedStateHandle) : ViewModel() {
                 .map { inetAddress -> inetAddress.hostAddress }
         }
         return localAddresses.firstOrNull()
-    }
-
-    override fun onCleared() {
-        Log.d("openWebSocket", "onCleared: ")
-        super.onCleared()
     }
 }
