@@ -12,30 +12,19 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.connor.websocketchatserver.MainActivity
 import com.connor.websocketchatserver.R
-import com.connor.websocketchatserver.ktor.configureRouting
-import com.connor.websocketchatserver.ktor.configureSerialization
-import com.connor.websocketchatserver.vm.MainViewModel
 import com.drake.channel.sendTag
-import io.ktor.server.engine.*
-import io.ktor.server.netty.*
+import io.ktor.server.cio.*
 import kotlinx.coroutines.*
-import kotlin.concurrent.thread
+import org.koin.android.ext.android.inject
 
 class KtorService : Service() {
 
-    private val job = Job()
-    private val ioScope = CoroutineScope(Dispatchers.IO + job)
+    private val configServer: CIOApplicationEngine by inject()
+    private val ioDispatcher: CoroutineDispatcher by inject()
 
-    private val configServer by lazy {
-        embeddedServer(Netty, port = 19980, host = "0.0.0.0", configure = {
-            connectionGroupSize = 2
-            workerGroupSize = 5
-            callGroupSize = 10
-        }) {
-            configureRouting()
-            configureSerialization()
-        }
-    }
+    private val job = Job()
+    private val scope = CoroutineScope(job)
+
 
     override fun onCreate() {
         super.onCreate()
@@ -59,10 +48,9 @@ class KtorService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        ioScope.launch {
+        scope.launch(ioDispatcher) {
             configServer.start(wait = true)
         }
-
         return super.onStartCommand(intent, flags, startId)
     }
 
@@ -71,10 +59,14 @@ class KtorService : Service() {
     }
 
     override fun onDestroy() {
-        ioScope.launch {
-            configServer.stop(4000, 8000)
-            sendTag("serverStop")
-            job.cancelAndJoin()
+        scope.launch {
+            kotlin.runCatching {
+                configServer.stop(2_000, 3_000)
+                sendTag("serverStop")
+                job.cancelAndJoin()
+            }.onFailure {
+                Log.d("onFailure", "onDestroy: ${it.localizedMessage}")
+            }
         }
         super.onDestroy()
     }

@@ -5,6 +5,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import com.connor.websocketchatserver.models.ChatMessage
 import com.drake.serialize.serialize.serialLazy
+import kotlinx.coroutines.Dispatchers
 import java.net.NetworkInterface
 
 class MainViewModel(val handle: SavedStateHandle) : ViewModel() {

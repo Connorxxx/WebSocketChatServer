@@ -8,6 +8,7 @@ import io.ktor.server.websocket.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.job
@@ -21,15 +22,14 @@ fun Route.webSocket() {
                     outgoing.send(Frame.Text(it))
                 }
             }.onFailure {
-                Log.e("onFailure", "send: ", )
+                Log.e("onFailure", "send: ${it.localizedMessage}")
             }
             kotlin.runCatching {
                 incoming.receiveAsFlow().filterIsInstance<Frame.Text>().collect {
-                    val receivedText = it.readText()
-                    sendEvent(receivedText, "receivedText")
+                    sendEvent(it.readText(), "receivedText")
                 }
             }.onFailure {
-                Log.e("onFailure", "receivedText: ${it.localizedMessage}", )
+                Log.e("onFailure", "receivedText: ${it.localizedMessage}")
             }
         }
     }
